@@ -1,56 +1,60 @@
 pipeline {
-      agent {
-        docker {
-            image 'node:6-alpine'
-            args '-p 3000:3000'
-        }
-    }
-     environment {
-            CI = 'true'
-             GIT_COMMIT_HASH = ''
-        }
-
-
+      agent any
+  environment {
+    CI = 'true'
+    GIT_COMMIT_HASH = ''
+  }
 
     stages {
+      agent {
+      docker {
+            image 'node:6-alpine'
+            args '-p 3000:3000'
+      }
+      }
+    steps {
+      sh 'npm --version'
+      sh 'npm install'
+      sh 'npm run build --prod'
+    }
         stage('Checkout') {
-            steps {
-                script {
-                    checkout scm: [$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/Tadix/angular-simple']]]
-                    GIT_COMMIT_HASH = sh(script: "git log -n 1 --pretty=format:'%H' | tr -d '\n'", returnStdout: true).trim()
-                }
-            }
+      steps {
+        script {
+          checkout scm: [$class: 'GitSCM', branches: [[name: '*/main']], userRemoteConfigs: [[url: 'https://github.com/Tadix/angular-simple']]]
+          GIT_COMMIT_HASH = sh(script: "git log -n 1 --pretty=format:'%H' | tr -d '\n'", returnStdout: true).trim()
+        }
+      }
         }
 
         stage('Build') {
-            steps {
-                sh 'npm install'
-                sh 'npm run build --prod'
-            }
+      steps {
+        sh 'npm install'
+        sh 'npm run build --prod'
+      }
         }
 
         stage('Build Docker Image') {
-            steps {
-                sh 'sudo docker build -t angular-simple .'
-            }
+      steps {
+        sh 'sudo docker build -t angular-simple .'
+      }
         }
 
         stage('Push Docker Image To Registry') {
-            steps {
-                script {
-                    sh "sudo docker tag angular-simple tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-                    sh 'sudo docker tag angular-simple tadix07/tadix-private-image:latest'
-                    withCredentials([usernamePassword(credentialsId: 'tadix07', passwordVariable: 'password', usernameVariable: 'username')]) {
-                        sh "sudo docker login -u $username -p $password"
-                        sh "sudo docker push tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-                        sh 'sudo docker push tadix07/tadix-private-image:latest'
-                        sh "sudo docker rmi tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-                        sh 'sudo docker rmi tadix07/tadix-private-image:latest'
-                        sh 'sudo docker rmi tadix07/tadix-private-image'
-                        stash include: 'docker-compose.yml', name: 'utils'
-                    }
-                }
-            }
+      steps {
+        script {
+          sh "sudo docker tag angular-simple tadix07/tadix-private-image:$GIT_COMMIT_HASH"
+          sh 'sudo docker tag angular-simple tadix07/tadix-private-image:latest'
+          withCredentials([usernamePassword(credentialsId: 'tadix07', passwordVariable: 'password', usernameVariable: 'username')]) {
+            sh "sudo docker login -u $username -p $password"
+            sh "sudo docker push tadix07/tadix-private-image:$GIT_COMMIT_HASH"
+            sh 'sudo docker push tadix07/tadix-private-image:latest'
+            sh "sudo docker rmi tadix07/tadix-private-image:$GIT_COMMIT_HASH"
+            sh 'sudo docker rmi tadix07/tadix-private-image:latest'
+            sh 'sudo docker rmi tadix07/tadix-private-image'
+            stash include: 'docker-compose.yml', name: 'utils'
+          }
+        }
+      }
         }
     }
 }
