@@ -1,14 +1,14 @@
-version: '3'
-services:
-    pro-epargne-admin-ui:
-        image: tadix07/tadix-private-image:latest
-        container_name: angular-simple
-        ports:
-            - "82:80"
+# version: '3'
+# services:
+#     angular-simple:
+#         image: tadix07/tadix-private-image:latest
+#         container_name: angular-simple
+#         ports:
+#             - "82:80"
 
 
 
-networks:
-    default:
-        external:
-            name: dev-ops-test
+# networks:
+#     default:
+#         external:
+#             name: dev-ops-test

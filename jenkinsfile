@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:14'
+        }
+    }
 
     environment {
         GIT_COMMIT_HASH = ''
@@ -32,7 +36,7 @@ pipeline {
             steps {
                 script {
                     sh "sudo docker tag angular-simple tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-                    sh 'sudo docker tag angular-simple tadix07/tadix-private-image'
+                    sh 'sudo docker tag angular-simple tadix07/tadix-private-image:latest'
                     withCredentials([usernamePassword(credentialsId: 'tadix07', passwordVariable: 'password', usernameVariable: 'username')]) {
                         sh "sudo docker login -u $username -p $password"
                         sh "sudo docker push tadix07/tadix-private-image:$GIT_COMMIT_HASH"
