@@ -1,31 +1,30 @@
 pipeline {
     def GIT_COMMIT_HASH = ''
-    stages {
-        stage('Checkout') {
-      checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Tadix/angular-simple']])
-      GIT_COMMIT_HASH = sh(script: "git log -n 1 --pretty=format:'%H'", returnStdout: true)
-        }
 
-        stage('Build') {
+    stage('Checkout') {
+        checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Tadix/angular-simple']])
+        GIT_COMMIT_HASH = sh(script: "git log -n 1 --pretty=format:'%H' | tr -d '\n'", returnStdout: true).trim()
+    }
+
+    stage('Build') {
         sh 'npm install'
         sh 'npm run build --prod'
-        }
-
-       stage("Build Docker Image") {
-        sh "sudo docker build -t angular-simple ."
-    }
     }
 
-    stage("Push Docker Image To Registry") {
+    stage('Build Docker Image') {
+        sh 'sudo docker build -t angular-simple .'
+    }
+
+    stage('Push Docker Image To Registry') {
         sh "sudo docker tag angular-simple tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-        sh "sudo docker tag angular-simple tadix07/tadix-private-image"
+        sh 'sudo docker tag angular-simple tadix07/tadix-private-image'
         withCredentials([usernamePassword(credentialsId: 'tadix07', passwordVariable: 'password', usernameVariable: 'username')]) {
             sh "sudo docker login -u $username -p $password"
             sh "sudo docker push tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-            sh "sudo docker push tadix07/tadix-private-image:latest"
+            sh 'sudo docker push tadix07/tadix-private-image:latest'
             sh "sudo docker rmi tadix07/tadix-private-image:$GIT_COMMIT_HASH"
-            sh "sudo docker rmi tadix07/tadix-private-image:latest"
-            sh "sudo docker rmi tadix07/tadix-private-image"
+            sh 'sudo docker rmi tadix07/tadix-private-image:latest'
+            sh 'sudo docker rmi tadix07/tadix-private-image'
             stash include: 'docker-compose.yml', name: 'utils'
         }
     }
