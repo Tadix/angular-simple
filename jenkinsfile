@@ -1,9 +1,9 @@
 pipeline {
-      agent any
-  environment {
-    CI = 'true'
-    GIT_COMMIT_HASH = ''
-  }
+    agent any
+
+    environment {
+        GIT_COMMIT_HASH = ''
+    }
 
     stages {
         stage('Checkout') {
@@ -16,16 +16,10 @@ pipeline {
         }
 
         stage('Build') {
-      agent {
-        docker {
-            image 'node:6-alpine'
-            args '-p 3000:3000'
-        }
-      }
       steps {
-        sh 'npm --version'
-        sh 'npm install'
-        sh 'npm run build --prod'
+        sh '/usr/local/bin/npm --version'
+        sh '/usr/local/bin/npm install'
+        sh '/usr/local/bin/npm run build --prod'
       }
         }
 
