@@ -17,6 +17,7 @@ pipeline {
 
         stage('Build') {
       steps {
+        sh 'chmod +x /usr/local/bin/npm'
         sh '/usr/local/bin/npm --version'
         sh '/usr/local/bin/npm install'
         sh '/usr/local/bin/npm run build --prod'
